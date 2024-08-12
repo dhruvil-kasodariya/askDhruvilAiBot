@@ -9,7 +9,6 @@ async function generateAIContent(prompt = "give 200 word essay about cow") {
 
   try {
     const result = await model.generateContent([prompt]);
-    console.log('result :>> ', result.response);
     return result.response.text();
   } catch (error) {
     console.error("Error generating AI content:", error);
