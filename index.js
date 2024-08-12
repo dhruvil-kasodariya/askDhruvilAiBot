@@ -1,8 +1,20 @@
+const express = require('express');
 const TelegramBot = require("node-telegram-bot-api");
 const generateAIContent = require("./servies/generateAIContent.js");
 require("dotenv").config();
 
 const token = process.env.TELIGRAM_BOT_API_KEY;
+if (!token) {
+  console.error('Error: Telegram bot token is missing.');
+  process.exit(1);
+}
+const app = express();
+const port = process.env.PORT || 7000; // Default to port 3000
+
+// Create a basic endpoint to satisfy the web server requirement
+app.get('/', (req, res) => {
+  res.send('Telegram bot is running');
+});
 
 const bot = new TelegramBot(token, {
   polling: true,
@@ -39,3 +51,8 @@ bot.on("polling_start", () => {
 });
 
 console.log("Bot initialized. Waiting for messages...");
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
+});
