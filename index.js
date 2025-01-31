@@ -12,21 +12,27 @@ if (!token) {
 const app = express();
 const port = process.env.PORT || 7000;
 
-// Set webhook URL - replace with your actual domain
-const url = process.env.APP_URL || 'https://your-domain.com';
+// Add options for polling
 const bot = new TelegramBot(token, {
-  webHook: {
-    port: port
+  polling: {
+    interval: 300,
+    autoStart: true,
+    params: {
+      timeout: 10
+    }
   }
 });
 
-// Set the webhook
-bot.setWebHook(`${url}/bot${token}`);
+// Add error handling middleware
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  if (error.code === 'EFATAL') {
+    process.exit(1);
+  }
+});
 
-// Handle webhook
-app.post(`/bot${token}`, (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 // Your existing message handler
@@ -49,7 +55,18 @@ bot.on("message", async (msg) => {
   }
 });
 
-// Basic health check endpoint
+bot.on("polling_error", (error) => {
+  console.error("Polling error:", error);
+  // Add retry logic if needed
+  if (error.code === 'ETELEGRAM') {
+    console.log('Restarting polling...');
+    bot.stopPolling();
+    setTimeout(() => {
+      bot.startPolling();
+    }, 5000);
+  }
+});
+
 app.get('/', (req, res) => {
   res.send('Telegram bot is running');
 });
