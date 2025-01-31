@@ -36,6 +36,15 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Your existing message handler
+
+//commant
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, 'Welcome! 👋 I am your helpful bot. Here are my commands:\n\n' +
+    '/help - Show all available commands\n' +
+    '/reset - for clear preavese chat\n');
+});
+
 // Your message handler
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
