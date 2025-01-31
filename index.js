@@ -1,6 +1,6 @@
 const express = require('express');
 const TelegramBot = require("node-telegram-bot-api");
-const generateAIContent = require("./servies/generateAIContent.js");
+const { generateAIContent, clearChatHistory } = require("./servies/generateAIContent.js");
 require("dotenv").config();
 
 const token = process.env.TELIGRAM_BOT_API_KEY;
@@ -36,14 +36,23 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Your existing message handler
+// Your message handler
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const customPrompt = msg.text;
   console.log("Received message:", customPrompt);
+  
+  // Handle /reset command to clear chat history
+  if (customPrompt === '/reset') {
+    clearChatHistory(chatId);
+    await bot.sendMessage(chatId, "Chat history has been reset!");
+    return;
+  }
+  
   try {
     console.log('chatId :>> ', chatId);
     bot.sendChatAction(chatId, "typing");
-    const generatedContent = await generateAIContent(customPrompt);
+    const generatedContent = await generateAIContent(customPrompt, chatId);  // Pass chatId
     console.log('generated Content', generatedContent);
     await bot.sendMessage(chatId, generatedContent);
   } catch (error) {
