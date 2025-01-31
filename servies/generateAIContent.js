@@ -1,45 +1,80 @@
-// aiService.js
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require('dotenv').config();
 
-// Store chats for different users
-const userChats = new Map();
+const userSessions = new Map();
 
-async function generateAIContent(prompt, chatId) {  // Add chatId parameter
+async function generateAIContent(prompt, chatId, language) {  
   const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
   
-  // Get existing chat or create new one
-  if (!userChats.has(chatId)) {
-    const newChat = model.startChat({
-      history: [
-        {
-          role: "user",
-          parts: [{ text: "Hello" }],
-        },
-        {
-          role: "model",
-          parts: [{ text: "Great to meet you. What would you like to know?" }],
-        },
-      ],
+  if (!userSessions.has(chatId)) {
+    userSessions.set(chatId, {
+      chat: model.startChat({
+        history: [
+          {
+            role: "user",
+            parts: [{ text: `I need help with ${language} programming` }],
+          },
+          {
+            role: "model",
+            parts: [{ text: `Ready to assist you with ${language}. What do you need help with?` }],
+          },
+        ],
+      }),
+      language: language
     });
-    userChats.set(chatId, newChat);
   }
   
-  const chat = userChats.get(chatId);
+  const session = userSessions.get(chatId);
+  console.log('prompt', prompt)
+  const enhancedPrompt = `Assist me with ${language} programming: ${prompt}`;
+  console.log('enhancedPrompt', enhancedPrompt)
   
   try {
-    const result = await chat.sendMessage(prompt);
-    return result.response.text();
+    const result = await session.chat.sendMessage(enhancedPrompt);
+    let responseText =await result.response.text();
+   // Format the response text with proper spacing and markdown
+   responseText = responseText
+   // Add proper spacing for headings
+   .replace(/\n(#{1,6}\s)/g, '\n\n$1')
+   
+   // Add proper spacing for bullet points
+   .replace(/\n([*-])/g, '\n\n$1')
+   
+   // Add proper spacing for numbered lists
+   .replace(/\n(\d+\.)/g, '\n\n$1')
+   
+   // Add proper spacing for code blocks
+   .replace(/\n(```[^\n]*)/g, '\n\n$1')
+   .replace(/\n(```\s*)$/gm, '\n\n$1\n')
+   
+   // Add proper spacing after code blocks
+   .replace(/(```)\n(?![\n#*\d])/g, '$1\n\n')
+   
+   // Format inline code
+   .replace(/`([^`]+)`/g, '`$1`')
+   
+   // Ensure proper spacing around bold/italic text
+   .replace(/\*\*(.*?)\*\*/g, '**$1**')
+   .replace(/\*(.*?)\*/g, '*$1*')
+   
+   // Remove excessive blank lines (more than 2)
+   .replace(/\n{3,}/g, '\n\n')
+   
+   // Ensure proper spacing around paragraphs
+   .replace(/([.!?])\n(?!\n)/g, '$1\n\n')
+   
+   // Clean up any remaining formatting issues
+   .trim();
+    return responseText;
   } catch (error) {
     console.error("Error generating AI content:", error);
     throw error;
   }
 }
 
-// Add function to clear chat history if needed
 function clearChatHistory(chatId) {
-  userChats.delete(chatId);
+  userSessions.delete(chatId);
 }
 
 module.exports = { generateAIContent, clearChatHistory };
