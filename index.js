@@ -32,8 +32,10 @@ bot.on("message", async (msg) => {
   const customPrompt = msg.text;
   console.log("Received message:", customPrompt);
   try {
+    console.log('chatId :>> ', chatId);
     bot.sendChatAction(chatId, "typing");
     const generatedContent = await generateAIContent(customPrompt);
+    console.log('generateContent :>> ', generateContent);
     console.log('generated Content', generatedContent)
     await bot.sendMessage(chatId, generatedContent);
   } catch (error) {
