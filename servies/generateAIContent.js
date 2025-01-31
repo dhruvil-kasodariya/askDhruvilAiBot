@@ -19,7 +19,7 @@ async function generateAIContent(prompt = "give 200 word essay about cow") {
     ],
   });
   try {
-    const result = await chat.startChat(prompt);
+    const result = await chat.sendMessage(prompt);
     return result.response.text();
   } catch (error) {
     console.error("Error generating AI content:", error);
