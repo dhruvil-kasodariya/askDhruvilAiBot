@@ -8,25 +8,28 @@ if (!token) {
   console.error('Error: Telegram bot token is missing.');
   process.exit(1);
 }
+
 const app = express();
-const port = process.env.PORT || 7000; // Default to port 3000
+const port = process.env.PORT || 7000;
 
-// Create a basic endpoint to satisfy the web server requirement
-app.get('/', (req, res) => {
-  res.send('Telegram bot is running');
-});
-
+// Set webhook URL - replace with your actual domain
+const url = process.env.APP_URL || 'https://your-domain.com';
 const bot = new TelegramBot(token, {
-  polling: true,
-  request: {
-    rejectUnauthorized: false,
-  },
+  webHook: {
+    port: port
+  }
 });
 
-// Add this error listener
-bot.on("polling_error", (error) => {
-  console.error("Polling error:", error);
+// Set the webhook
+bot.setWebHook(`${url}/bot${token}`);
+
+// Handle webhook
+app.post(`/bot${token}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
 });
+
+// Your existing message handler
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const customPrompt = msg.text;
@@ -35,8 +38,7 @@ bot.on("message", async (msg) => {
     console.log('chatId :>> ', chatId);
     bot.sendChatAction(chatId, "typing");
     const generatedContent = await generateAIContent(customPrompt);
-    console.log('generateContent :>> ', generateContent);
-    console.log('generated Content', generatedContent)
+    console.log('generated Content', generatedContent);
     await bot.sendMessage(chatId, generatedContent);
   } catch (error) {
     console.error("Error in message handler:", error);
@@ -47,14 +49,13 @@ bot.on("message", async (msg) => {
   }
 });
 
-// Add this to log when the bot starts polling
-bot.on("polling_start", () => {
-  console.log("Bot started polling");
+// Basic health check endpoint
+app.get('/', (req, res) => {
+  res.send('Telegram bot is running');
 });
 
-console.log("Bot initialized. Waiting for messages...");
-
-// Start the server
 app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
+});listen(port, () => {
   console.log(`Server is listening on port ${port}`);
 });
