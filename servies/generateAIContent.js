@@ -33,38 +33,38 @@ async function generateAIContent(prompt, chatId, language) {
     const result = await session.chat.sendMessage(enhancedPrompt);
     let responseText =await result.response.text();
    // Format the response text with proper spacing and markdown
-   responseText = responseText
-   // Add proper spacing for headings
-   .replace(/\n(#{1,6}\s)/g, '\n\n$1')
+  //  responseText = responseText
+  //  // Add proper spacing for headings
+  //  .replace(/\n(#{1,6}\s)/g, '\n\n$1')
    
-   // Add proper spacing for bullet points
-   .replace(/\n([*-])/g, '\n\n$1')
+  //  // Add proper spacing for bullet points
+  //  .replace(/\n([*-])/g, '\n\n$1')
    
-   // Add proper spacing for numbered lists
-   .replace(/\n(\d+\.)/g, '\n\n$1')
+  //  // Add proper spacing for numbered lists
+  //  .replace(/\n(\d+\.)/g, '\n\n$1')
    
-   // Add proper spacing for code blocks
-   .replace(/\n(```[^\n]*)/g, '\n\n$1')
-   .replace(/\n(```\s*)$/gm, '\n\n$1\n')
+  //  // Add proper spacing for code blocks
+  //  .replace(/\n(```[^\n]*)/g, '\n\n$1')
+  //  .replace(/\n(```\s*)$/gm, '\n\n$1\n')
    
-   // Add proper spacing after code blocks
-   .replace(/(```)\n(?![\n#*\d])/g, '$1\n\n')
+  //  // Add proper spacing after code blocks
+  //  .replace(/(```)\n(?![\n#*\d])/g, '$1\n\n')
    
-   // Format inline code
-   .replace(/`([^`]+)`/g, '`$1`')
+  //  // Format inline code
+  //  .replace(/`([^`]+)`/g, '`$1`')
    
-   // Ensure proper spacing around bold/italic text
-   .replace(/\*\*(.*?)\*\*/g, '**$1**')
-   .replace(/\*(.*?)\*/g, '*$1*')
+  //  // Ensure proper spacing around bold/italic text
+  //  .replace(/\*\*(.*?)\*\*/g, '**$1**')
+  //  .replace(/\*(.*?)\*/g, '*$1*')
    
-   // Remove excessive blank lines (more than 2)
-   .replace(/\n{3,}/g, '\n\n')
+  //  // Remove excessive blank lines (more than 2)
+  //  .replace(/\n{3,}/g, '\n\n')
    
-   // Ensure proper spacing around paragraphs
-   .replace(/([.!?])\n(?!\n)/g, '$1\n\n')
+  //  // Ensure proper spacing around paragraphs
+  //  .replace(/([.!?])\n(?!\n)/g, '$1\n\n')
    
-   // Clean up any remaining formatting issues
-   .trim();
+  //  // Clean up any remaining formatting issues
+  //  .trim();
    console.log('responseText :>> ', responseText);
     return responseText;
   } catch (error) {
