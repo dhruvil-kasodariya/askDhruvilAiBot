@@ -36,12 +36,6 @@ async function generateAIContent(prompt, chatId, language) {
       responseText = responseText
       // Escape special characters for Telegram MarkdownV2
       .replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1')
-      
-      // Format code blocks for Telegram
-      .replace(/```([^\n]*)\n([\s\S]*?)```/g, (match, language, code) => {
-        return `\\`\\`\\`${language}\n${code.trim()}\\`\\`\\``;
-      })
-
       // Format inline code
       .replace(/`([^`]+)`/g, '\\`$1\\`')
       
