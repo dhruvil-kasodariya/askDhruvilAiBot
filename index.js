@@ -12,83 +12,126 @@ if (!token) {
 const app = express();
 const port = process.env.PORT || 7000;
 
-// Add options for polling
 const bot = new TelegramBot(token, {
   polling: {
     interval: 300,
     autoStart: true,
-    params: {
-      timeout: 10
-    }
+    params: { timeout: 10 }
   }
 });
 
-// Add error handling middleware
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  if (error.code === 'EFATAL') {
-    process.exit(1);
-  }
-});
+const userLanguages = new Map();
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
+const languages = [
+  'Java', 'JavaScript', 'Python', 'C++', 'Rust', 
+  'Solidity', 'TypeScript', 'Go', 'Kotlin', 
+  'Swift', 'PHP', 'Ruby', 'Scala', 'Dart', 
+  'Haskell', 'Elixir', 'Crystal'
+];
 
-// Your existing message handler
+function getLanguageMenu() {
+  return {
+    reply_markup: JSON.stringify({
+      inline_keyboard: languages.reduce((rows, lang, index) => {
+        if (index % 3 === 0) rows.push([]);
+        rows[rows.length - 1].push({ 
+          text: lang, 
+          callback_data: `language:${lang}` 
+        });
+        return rows;
+      }, [])
+    })
+  };
+}
 
-//commant
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, 'Welcome! 👋 I am your helpful bot. Here are my commands:\n\n' +
-    '/help - Show all available commands\n' +
-    '/reset - for clear preavese chat\n');
+  bot.sendMessage(
+    chatId, 
+    "Welcome to the AI Assistant! Select a language for assistance:", 
+    getLanguageMenu()
+  );
 });
 
-// Your message handler
-bot.on("message", async (msg) => {
-  const chatId = msg.chat.id;
-  const customPrompt = msg.text;
-  console.log("Received message:", customPrompt);
-  
-  // Handle /reset command to clear chat history
-  if (customPrompt === '/reset') {
-    clearChatHistory(chatId);
-    await bot.sendMessage(chatId, "Chat history has been reset!");
-    return;
-  }
-  
-  try {
-    console.log('chatId :>> ', chatId);
-    bot.sendChatAction(chatId, "typing");
-    const generatedContent = await generateAIContent(customPrompt, chatId);  // Pass chatId
-    console.log('generated Content', generatedContent);
-    await bot.sendMessage(chatId, generatedContent);
-  } catch (error) {
-    console.error("Error in message handler:", error);
+bot.on('callback_query', (callbackQuery) => {
+  const message = callbackQuery.message;
+  const chatId = message.chat.id;
+  const data = callbackQuery.data;
+
+  if (data.startsWith('language:')) {
+    const selectedLanguage = data.split(':')[1];
+    userLanguages.set(chatId, selectedLanguage);
+    
+    bot.answerCallbackQuery(callbackQuery.id);
     bot.sendMessage(
-      chatId,
-      "Sorry, I couldn't process your request. Please try again later."
+      chatId, 
+      `Language set to ${selectedLanguage}. Ready to help!`
     );
   }
 });
 
-bot.on("polling_error", (error) => {
-  console.error("Polling error:", error);
-  // Add retry logic if needed
-  if (error.code === 'ETELEGRAM') {
-    console.log('Restarting polling...');
-    bot.stopPolling();
-    setTimeout(() => {
-      bot.startPolling();
-    }, 5000);
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const customPrompt = msg.text;
+  
+  if (customPrompt === '/start') return;
+
+  if (customPrompt === '/reset') {
+    clearChatHistory(chatId);
+    userLanguages.delete(chatId);
+    await bot.sendMessage(chatId, "Reset complete!");
+    bot.sendMessage(
+      chatId, 
+      "Let's start over! Select a language:", 
+      getLanguageMenu()
+    );
+    return;
+  }
+
+  if (!userLanguages.has(chatId)) {
+    await bot.sendMessage(
+      chatId, 
+      "Please select a language first using /start"
+    );
+    return;
+  }
+
+  try {
+    const selectedLanguage = userLanguages.get(chatId);
+    bot.sendChatAction(chatId, "typing");
+    const generatedContent = await generateAIContent(
+      customPrompt, 
+      chatId, 
+      selectedLanguage
+    );
+    await bot.sendMessage(chatId, generatedContent,{
+      parse_mode: 'Markdown', disable_web_page_preview: true});
+  } catch (error) {
+    console.error("Error:", error);
+    bot.sendMessage(
+      chatId,
+      "Request failed. Please try again."
+    );
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('Telegram bot is running');
+// Error handling
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  if (error.code === 'EFATAL') process.exit(1);
 });
 
-app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection:', reason);
 });
+
+bot.on("polling_error", (error) => {
+  console.error("Polling error:", error);
+  if (error.code === 'ETELEGRAM') {
+    bot.stopPolling();
+    setTimeout(() => bot.startPolling(), 5000);
+  }
+});
+
+app.get('/', (req, res) => res.send('Bot running'));
+app.listen(port, () => console.log(`Server on port ${port}`));
