@@ -32,39 +32,31 @@ async function generateAIContent(prompt, chatId, language) {
   try {
     const result = await session.chat.sendMessage(enhancedPrompt);
     let responseText =await result.response.text();
-   // Format the response text with proper spacing and markdown
-  //  responseText = responseText
-  //  // Add proper spacing for headings
-  //  .replace(/\n(#{1,6}\s)/g, '\n\n$1')
-   
-  //  // Add proper spacing for bullet points
-  //  .replace(/\n([*-])/g, '\n\n$1')
-   
-  //  // Add proper spacing for numbered lists
-  //  .replace(/\n(\d+\.)/g, '\n\n$1')
-   
-  //  // Add proper spacing for code blocks
-  //  .replace(/\n(```[^\n]*)/g, '\n\n$1')
-  //  .replace(/\n(```\s*)$/gm, '\n\n$1\n')
-   
-  //  // Add proper spacing after code blocks
-  //  .replace(/(```)\n(?![\n#*\d])/g, '$1\n\n')
-   
-  //  // Format inline code
-  //  .replace(/`([^`]+)`/g, '`$1`')
-   
-  //  // Ensure proper spacing around bold/italic text
-  //  .replace(/\*\*(.*?)\*\*/g, '**$1**')
-  //  .replace(/\*(.*?)\*/g, '*$1*')
-   
-  //  // Remove excessive blank lines (more than 2)
-  //  .replace(/\n{3,}/g, '\n\n')
-   
-  //  // Ensure proper spacing around paragraphs
-  //  .replace(/([.!?])\n(?!\n)/g, '$1\n\n')
-   
-  //  // Clean up any remaining formatting issues
-  //  .trim();
+      // Format for Telegram's MarkdownV2 format
+      responseText = responseText
+      // Escape special characters for Telegram MarkdownV2
+      .replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1')
+      
+      // Format code blocks for Telegram
+      .replace(/```([^\n]*)\n([\s\S]*?)```/g, (match, language, code) => {
+        return `\\`\\`\\`${language}\n${code.trim()}\\`\\`\\``;
+      })
+
+      // Format inline code
+      .replace(/`([^`]+)`/g, '\\`$1\\`')
+      
+      // Format bullet points (using • instead of *)
+      .replace(/\n\* /g, '\n• ')
+      
+      // Format numbered lists (ensure proper spacing)
+      .replace(/\n(\d+)\. /g, '\n$1\\. ')
+      
+      // Clean up excessive newlines
+      .replace(/\n{3,}/g, '\n\n')
+      
+      // Trim any trailing whitespace
+      .trim();
+
    console.log('responseText :>> ', responseText);
     return responseText;
   } catch (error) {

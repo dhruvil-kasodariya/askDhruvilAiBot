@@ -105,7 +105,7 @@ bot.on("message", async (msg) => {
       selectedLanguage
     );
     await bot.sendMessage(chatId, generatedContent,{
-      parse_mode: 'Markdown', disable_web_page_preview: true});
+      parse_mode: 'MarkdownV2', disable_web_page_preview: true});
   } catch (error) {
     console.error("Error:", error);
     bot.sendMessage(
