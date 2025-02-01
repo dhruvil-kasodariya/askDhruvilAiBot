@@ -26,7 +26,6 @@ async function generateAIContent(prompt, chatId, language) {
   }
   
   const session = userSessions.get(chatId);
-  console.log('prompt', prompt)
   const enhancedPrompt = `Assist me with ${language} programming: ${prompt}`;
   console.log('enhancedPrompt', enhancedPrompt)
   
@@ -66,6 +65,7 @@ async function generateAIContent(prompt, chatId, language) {
    
    // Clean up any remaining formatting issues
    .trim();
+   console.log('responseText :>> ', responseText);
     return responseText;
   } catch (error) {
     console.error("Error generating AI content:", error);
